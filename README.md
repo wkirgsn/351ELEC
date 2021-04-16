@@ -1,6 +1,7 @@
-# 351ELEC
+# 351ELEC Fork
 
 An open source firmware for the Anbernic RG351P/M/V devices.
+This fork aims to be built by Python-based build tools in contrast to the traditional make.
 
 ## Features
 
