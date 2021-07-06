@@ -57,8 +57,8 @@ else
   MYGAME=${ROMNAME^^}
   MYBOOT="
 
-\e[1;${cols}H#### WELCOME TO \e[31m351\e[39mELEC VERSION $(cat /storage/.config/.OS_VERSION) ####
-\e[2;${cols}H $(awk '/MemTotal/ {printf substr($2,1,3)}' /proc/meminfo)M BYTES AVAILABLE   $(awk '/MemFree/ {printf substr($2,1,3)}' /proc/meminfo)M BYTES FREE
+\e[1;${cols}H ########## WELCOME TO \e[31m351\e[39mELEC ##########
+\e[2;${cols}H  $(awk '/MemTotal/ {printf substr($2,1,3)}' /proc/meminfo)M BYTES AVAILABLE   $(awk '/MemFree/ {printf substr($2,1,3)}' /proc/meminfo)M BYTES FREE
 
 "
 
@@ -74,11 +74,11 @@ LOADING ${MYGAME##*/}
 READY.
 "
   clear >/dev/console;
-  message_stream "${MYBOOT}" 0
-  spinny_cursor "STARTING UP... " 6
-  message_stream "${MYREADY}" 0
+  echo -ne "${MYBOOT}" > /dev/console
+  spinny_cursor "STARTING UP... " 15
+  message_stream "${MYREADY}" .02
   message_stream "${MYSTART}" .02
-  message_stream "${MYLOADING}" 0
+  message_stream "${MYLOADING}" .02
   message_stream "RUN" .05
   exit 0
 fi

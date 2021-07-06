@@ -3,41 +3,23 @@
 An open source firmware for the Anbernic RG351P/M/V devices.
 This fork aims to be built by Python-based build tools in contrast to the traditional make.
 
-## Features
-
-* A 64bit Firmware optimized for the RG351P/M/V devices.
-* Fully Open Source with a wonderful community of users and contributors
-* An up-to-date and fresh user interface
-* Optimized defaults allowing you to pick up and play
-* Online updates
-* An EXFAT games partition easily accessible from Linux, Windows and MacOS (Optional on the V)
-
 351ELEC is a fork of [EmuELEC](https://github.com/EmuELEC/EmuELEC) which is based on [CoreELEC](https://github.com/CoreELEC/CoreELEC), [Lakka](https://github.com/libretro/Lakka-LibreELEC), and [Batocera](https://github.com/batocera-linux/batocera.linux).  It is intended for use only on the RG351P/M/V and is not compatible with other devices.
+
+Visit us on our Discord! https://discord.gg/bmXtCt88Tz
+
 
 ## Installation
 
 351ELEC minimally requires an 8GB MicroSD, however the experience will be limited.  For an optimal configuration 32GB or more is recommended.
 
-To download the latest version of 351ELEC, visit [updates.351elec.org](https://updates.351elec.org/releases/daily/).
+To download 351ELEC, click Releases.
 
 * Decompress the image
 * Write the image to a microSD using your favorite image writer
 
 On the first boot, 351ELEC will expand the storage and games partitions and then reboot to configure the firmware.  It's normal for this process to take a minute or two.  After setting up for the first time, subsequent boots will be much faster.
 
-For access to nightly builds with the most recent bleeding edge changes, visit #releases-nightly on discord.
-
 > RG351V users may use a large MicroSD in the first socket, or a smaller MicroSD with a larger card in the second socket.  The second card must have a single partition or whole card formatted with EXFAT, or EXT4.  FAT filesystems are not supported as it lacks support for filesystem features in use by 351ELEC. NTFS is not currently supported and may be added in a future release.
-
-## Updating
-
-351ELEC has shifted to a daily build cadence which means that our daily releases are the most stable and up-to-date versions of 351ELEC.  If you are a current user of the 2.0 "stable" release and you have not yet changed to the nightly build channel you will not be able to receive updates as the stable and release candidate channels are deprecated and have been removed from recent builds.
-
-## Getting Help
-
-Many frequently asked questions are covered in our [WIKI](https://github.com/351ELEC/351ELEC/wiki).  If you have general questions or if you need help, join us on [Discord](https://discord.gg/bmXtCt88Tz).
-
-For bug reports and feature requests, use one of the templates on the issues tab.  The more information you provide, the easier it will be to assist.  Please note that issues opened without using a form will be closed.  Please do not use the issue tracker for technical support, or your issue will be closed.
 
 ## Building from Source
 Building 351ELEC from source is a fairly simple process.  It is recommended to have a minimum of 4 cores, 16GB of RAM, and an SSD with 100GB of free space.  The build environment used to develop these steps uses Ubuntu 20.04, your mileage may vary when building on other distributions.
@@ -45,9 +27,9 @@ Building 351ELEC from source is a fairly simple process.  It is recommended to h
 ```
 sudo apt update && sudo apt upgrade
 
-sudo apt install gcc make git unzip wget xz-utils libsdl2-dev libsdl2-mixer-dev libfreeimage-dev libfreetype6-dev libcurl4-openssl-dev rapidjson-dev libasound2-dev libgl1-mesa-dev build-essential libboost-all-dev cmake fonts-droid-fallback libvlc-dev libvlccore-dev vlc-bin texinfo premake4 golang libssl-dev curl patchelf xmlstarlet patchutils gawk gperf xfonts-utils default-jre python xsltproc libjson-perl lzop libncurses5-dev device-tree-compiler u-boot-tools rsync p7zip unrar libparse-yapp-perl
+sudo apt install gcc make git unzip wget xz-utils libsdl2-dev libsdl2-mixer-dev libfreeimage-dev libfreetype6-dev libcurl4-openssl-dev rapidjson-dev libasound2-dev libgl1-mesa-dev build-essential libboost-all-dev cmake fonts-droid-fallback libvlc-dev libvlccore-dev vlc-bin texinfo premake4 golang libssl-dev curl patchelf xmlstarlet patchutils gawk gperf xfonts-utils default-jre python xsltproc libjson-perl lzop libncurses5-dev device-tree-compiler u-boot-tools rsync p7zip unrar libparse-yapp-perl zip binutils-aarch64-linux-gnu dos2unix p7zip-full
 
-git clone https://github.com/fewtarius/351ELEC.git 351ELEC  
+git clone https://github.com/351ELEC/351ELEC.git 351ELEC  
 
 cd 351ELEC
 
@@ -57,6 +39,53 @@ make world
 ```
 
 The make world process will build a 32bit and 64bit userland and generate a 64bit image which will be located in 351ELEC/release.  Follow the installation steps to write your image to a microSD.
+It will build for both the RG351P/M and for the RG351V.
+
+To create the image for the RG351P/M just ``make RG351P``, and just for the RG351V ``make RG351V``.
+
+## Building from Source - Docker
+Building with Docker simplifies the build process as any dependencies, with the exception of `make`, are contained within the docker image - all CPU/RAM/Disk/build time requirements remain similar. 
+
+NOTE: Make can be installed with `sudo apt update && sudo apt install -y make` on Ubuntu-based systems.
+
+All make commands are available via docker, by prepending `docker-`. `make RG351V` becomes `make docker-RG351V` and `make clean` becomes `make docker-clean`.
+
+New docker make commands: 
+- `make docker-image-build` - Builds the docker image based on the Dockerfile.  This is not required unless changes are needed locally. 
+- `make docker-image-pull` - Pulls docker image from dockerhub.  This will update to the latest image and replace any locally built changes to the docker file.
+- `make docker-shell` - (advanced) Launches a shell inside the docker build container.  This allows running any development commands like `./scripts/build`, etc, which aren't in the Makefile.
+  - NOTE: Errors like `groups: cannot find name for group ID 1002` and the user being listed as `I have no name!` are OK and a result of mapping the host user/group into the docker container where the host user/groups may not exist.
+
+Example building with docker:
+```
+git clone https://github.com/351ELEC/351ELEC.git 351ELEC  
+cd 351ELEC
+make docker-clean
+make docker-world
+```
+
+## Automated Dev Builds
+Builds are automatically run on commits to `main` and for Pull Requests (*PR's*) from previous committers.
+
+Development builds can be found looking for the green checkmarks next to commit history.  Artifacts are generated for each build which can be used to update the RG351P/RG351V and are stored for 30 days by GitHub.  Note that due to Github Action limitations, artifacts are zipped (.img.gz and .tar are inside the zip file).
+
+All artifacts generated by builds should be considered 'unstable' and only used by developers or advanced users who want to test the latest code.
+
+See: [Build Overview](.github/workflows/README.md) for more information.
+
+### GitHub Actions and Forks
+Builds use GitHub actions (`.github/workflow`) to execute.  GitHub validates that changes to the `.github/workflow` folder require a special `workflow` permission.  
+
+When using [Personal Access Token](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token) to push in upstream changes from 351ELEC into your fork, you may get an error similar to the following:
+
+```
+! [remote rejected]   main -> main (refusing to allow a Personal Access Token to create or update workflow `.github/workflows/README.md` without `workflow` scope)
+error: failed to push some refs to 'https://github.com/my-351elec-fork/351ELEC.git'
+```
+
+To fix, edit the [Personal Access Token](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token) to add `workflow` permissions (or create a new token with workflow permission).
+
+Alternatively, [ssh-key authentication](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) can be used.
 
 ## License
 
@@ -68,6 +97,6 @@ As 351ELEC includes code from many upstream projects it includes many copyright 
 
 ## Branding
 
-All 351ELEC related logos, videos, images and branding in general are the sole property of 351ELEC and they are all Copyrighted by the 351ELEC team and are not to be included in any commercial application whatsoever without the proper authorization, (yes, this includes 351ELEC bundled with ROMS for donations!).
+All 351ELEC related logos, videos, images and branding in general are the sole property of 351ELEC and they are all Copyrighted by the 351ELEC team and are not to be included in any commercial application whatsoever without the proper authorization!  351ELEC may not be bundled with games or distributed as donationware!
 
 You are however granted permission to include/modify them in your forks/projects as long as they are completely open-source, freely available (as in [but not limited to] not under a bunch of "click this sponsored ad to get the link!"), and do not infringe on any copyright laws, even if you receive donations for such project (we are not against donations for honest people!), we only ask that you give us the proper credit and if possible a link to this repo.

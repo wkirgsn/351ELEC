@@ -4,14 +4,14 @@
 
 PKG_NAME="es-theme-art-book-3-2"
 PKG_REV="1"
-PKG_VERSION="717da8420d002d4bd91249a8407cbaf30c80cd54"
+PKG_VERSION="83cbe17ec29a1c5bcb59c08d851714aded5607d5"
 PKG_ARCH="any"
 PKG_LICENSE="CUSTOM"
 PKG_SITE="https://github.com/anthonycaccese/es-theme-art-book-3-2"
 PKG_URL="$PKG_SITE.git"
 GET_HANDLER_SUPPORT="git"
 PKG_SHORTDESC="ArtBook"
-PKG_LONGDESC="Art Book - 351ELEC default theme"
+PKG_LONGDESC="Art Book - 351ELEC default theme for RG351P/M"
 PKG_TOOLCHAIN="manual"
 
 makeinstall_target() {

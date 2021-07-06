@@ -1,6 +1,10 @@
+* text=auto eol=lf
+*.patch -text
+
 # build directorys
 /build.*/
 /.fakeroot.*
+/.ccache-*
 
 # automatically downloaded source files
 /sources/

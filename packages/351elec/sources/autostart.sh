@@ -11,6 +11,7 @@ maxperf
 
 # write logs to tmpfs not the sdcard
 mkdir /tmp/logs
+ln -s /storage/roms/gamedata/retroarch/logs/ /tmp/logs/retroarch
 
 # Apply some kernel tuning
 sysctl vm.swappiness=1
@@ -73,10 +74,6 @@ if [ ! -L "$CONFIG_DIR" ]; then
   ln -sf $CONFIG_DIR2 $CONFIG_DIR
 fi
 
-### Necessary for OS initialization and updates
-
-set_ee_setting updates.type daily
-
 # Create the distribution directory if it doesn't exist, sync it if it does
 if [ ! -d "/storage/.config/distribution" ]
 then
@@ -98,11 +95,13 @@ rsync --ignore-existing -raz /usr/config/remappings/* /storage/remappings/ &
 # Copy OpenBOR
 rsync --ignore-existing -raz /usr/config/openbor /storage &
 
-# copy bezel if it doesn't exists
-if [ ! -f "/storage/roms/bezels/default.cfg" ]; then
-  mkbezels/
-  rsync --ignore-existing -raz /usr/share/retroarch-overlays/bezels/* /storage/roms/bezels/ &
-fi
+## Not needed any more
+## copy bezel if it doesn't exists
+#if [ ! -f "/storage/roms/bezels/default.cfg" ]; then
+#  mkbezels/
+#  rsync --ignore-existing -raz /usr/share/retroarch-overlays/bezels/* /storage/roms/bezels/ &
+#fi
+##
 
 # Copy pico-8
 cp -f  "/usr/bin/pico-8.sh" "/storage/roms/pico-8/Start Pico-8.sh" &
@@ -122,17 +121,17 @@ rm -rf /storage/.config/distribution/ports
 # End Automatic updates
 
 # Set video mode, this has to be done before starting ES
-DEFE=$(get_ee_setting ee_videomode)
-
-if [ "${DEFE}" != "Custom" ]; then
-    [ ! -z "${DEFE}" ] && echo "${DEFE}" > /sys/class/display/mode
-fi 
-
-if [ -s "/storage/.config/EE_VIDEO_MODE" ]; then
-        echo $(cat /storage/.config/EE_VIDEO_MODE) > /sys/class/display/mode
-elif [ -s "/flash/EE_VIDEO_MODE" ]; then
-        echo $(cat /flash/EE_VIDEO_MODE) > /sys/class/display/mode
-fi
+#DEFE=$(get_ee_setting ee_videomode)
+#
+#if [ "${DEFE}" != "Custom" ]; then
+#    [ ! -z "${DEFE}" ] && echo "${DEFE}" > /sys/class/display/mode
+#fi
+#
+#if [ -s "/storage/.config/EE_VIDEO_MODE" ]; then
+#        echo $(cat /storage/.config/EE_VIDEO_MODE) > /sys/class/display/mode
+#elif [ -s "/flash/EE_VIDEO_MODE" ]; then
+#        echo $(cat /flash/EE_VIDEO_MODE) > /sys/class/display/mode
+#fi
 
 # finally we correct the FB according to video mode
 /usr/bin/setres.sh
@@ -145,10 +144,36 @@ case "$DEFE" in
 	systemctl stop sshd
 	rm /storage/.cache/services/sshd.conf
 	;;
-*)
+"1")
 	mkdir -p /storage/.cache/services/
 	touch /storage/.cache/services/sshd.conf
 	systemctl start sshd
+	;;
+*)
+	systemctl stop sshd
+	rm /storage/.cache/services/sshd.conf
+	;;
+esac
+
+# handle SAMBA
+DEFE=$(get_ee_setting ee_samba.enabled)
+
+case "$DEFE" in
+"0")
+	systemctl stop nmbd
+	systemctl stop smbd
+	rm /storage/.cache/services/smb.conf
+	;;
+"1")
+	mkdir -p /storage/.cache/services/
+	touch /storage/.cache/services/smb.conf
+	systemctl start nmbd
+	systemctl start smbd
+	;;
+*)
+	systemctl stop nmbd
+	systemctl stop smbd
+	rm /storage/.cache/services/smb.conf
 	;;
 esac
 
@@ -162,7 +187,7 @@ then
   mkdir -p "${GAMEDATA}"
 fi
 
-for GAME in ppsspp dosbox scummvm retroarch hatari openbor opentyrian residualvm
+for GAME in ppsspp dosbox scummvm retroarch hatari openbor opentyrian
 do
   # Migrate or copy fresh data
   if [ ! -d "${GAMEDATA}/${GAME}" ]
@@ -171,7 +196,7 @@ do
     then
       mv "/storage/.config/${GAME}" "${GAMEDATA}/${GAME}"
     else
-      rsync -a "/usr/config/${GAME}" "${GAMEDATA}/${GAME}"
+      rsync -a "/usr/config/${GAME}/" "${GAMEDATA}/${GAME}/"
     fi
   fi
 
@@ -228,6 +253,12 @@ then
   rm -rf "/storage/roms/ports/pico-8" &
 fi
 
+## Only call postupdate once after an UPDATE
+if [ "UPDATE" == "$(cat /storage/.config/boot.hint)" ]; then
+        /usr/bin/postupdate.sh
+	echo "OK" > /storage/.config/boot.hint
+fi
+
 sync &
 
 # run custom_start before FE scripts
@@ -237,20 +268,14 @@ sync &
 normperf
 
 # Restore last saved brightness
-if [ -e /storage/.brightness ]
+BRIGHTNESS=$(get_ee_setting system.brightness)
+if [[ ! "${BRIGHTNESS}" =~ [0-9] ]]
 then
-  BRIGHTNESS=$(cat /storage/.brightness)
-  BRIGHTNESS=${BRIGHTNESS:0:2}
-  if [[ "${BRIGHTNESS}" -le 10 ]]
-  then
-    BRIGHTNESS=100
-  fi
-  echo ${BRIGHTNESS} > /sys/class/backlight/backlight/brightness
-  echo ${BRIGHTNESS} >/storage/.brightness
-else
-  echo 75 >/sys/class/backlight/backlight/brightness
-  echo 75 >/storage/.brightness
+  BRIGHTNESS=255
 fi
+BRIGHTNESS=$(printf "%.0f" ${BRIGHTNESS})
+echo ${BRIGHTNESS} > /sys/class/backlight/backlight/brightness
+set_ee_setting system.brightness ${BRIGHTNESS}
 
 # If the WIFI adapter isn't enabled, disable it on startup
 # to soft block the radio and save a bit of power.
